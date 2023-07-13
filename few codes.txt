@@ -1,0 +1,5 @@
+## Merging the dataset:
+  DataFrame_name.merge(right, how='inner', on=None, left_on=None, right_on=None, left_index=False, right_index=False, sort=False, suffixes=('_x', '_y'), copy=True, indicator=False, validate=None)
+
+## Filling up the NULL values:
+  DataFrame_name.fillna(value=None, method=None, axis=None, inplace=False, limit=None, downcast=None)
