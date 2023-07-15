@@ -12,12 +12,13 @@ stop_words = stopwords.words()
 def cleaning(text):        
     # converting to lowercase, removing URL links, special characters, punctuations...
     text = text.lower()
-    # text = re.sub('https?://\S+|www\.\S+', '', text)
+    text = re.sub('https?://\S+|www\.\S+', '', text)
     text = re.sub('<.*?>+', '', text)
     text = re.sub('[%s]' % re.escape(string.punctuation), '', text)
     text = re.sub('\n', '', text)
     text = re.sub('[’“”…]', '', text)     
 
+    # removing the emojies               # https://www.kaggle.com/alankritamishra/covid-19-tweet-sentiment-analysis#Sentiment-analysis
     emoji_pattern = re.compile("["
                            u"\U0001F600-\U0001F64F"  # emoticons
                            u"\U0001F300-\U0001F5FF"  # symbols & pictographs
@@ -35,12 +36,10 @@ def cleaning(text):
     text = filtered_sentence
     
     return text
-
 df = pd.read_excel('NaukriJobListing_2023-07-14.xlsx')
-
 dt = df['Job Title'].apply(cleaning)
 
 from collections import Counter
 p = Counter(" ".join(dt).split()).most_common(10)
-rslt = pd.DataFrame(p, columns=['Job Title', 'Frequency'])
+rslt = pd.DataFrame(p, columns=['Word', 'Frequency'])
 print(rslt)
