@@ -1,41 +1,26 @@
 import re
 import string
+import datetime
+
 import pandas as pd
 import numpy as np
 import seaborn as sns
-import nltk
 import matplotlib.pyplot as plt
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from sklearn.metrics.pairwise import cosine_similarity
-from textblob import Word
-from collections import Counter
-from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-
 
 ## Turn these on later:
 # nltk.download('punkt')
 # nltk.download('stopwords')
 
 naukri=pd.read_excel('NaukriJobListing_2023-07-14.xlsx')
+iimjobs=pd.read_excel('IIMJobsJobListing_2023-07-15.xlsx')
+
 job_titles=pd.read_excel('job-titles.xlsx')
 
-def preprocess_text(text):
-    # Lowercase the text
-    text = text.lower()
-    # Tokenize the text
-    tokens = word_tokenize(text)
-    # Load the stopwords set
-    stop_words = set(stopwords.words('english'))
-    # Remove stopwords and punctuation
-    tokens = [token for token in tokens if token.isalnum() and token not in stop_words]
-    # Rejoin tokens into a string
-    processed_text = ' '.join(tokens)
-    return processed_text
-
-def frequency(df):
+def frequency_title(df, column):
   stop_words = stopwords.words()
 
   def cleaning(text):        
@@ -65,67 +50,99 @@ def frequency(df):
       text = filtered_sentence
       
       return text
-  df = pd.read_excel('NaukriJobListing_2023-07-14.xlsx')
-  dt = df['Job Title'].apply(cleaning)
+  
+  # df = pd.read_excel('NaukriJobListing_2023-07-14.xlsx')
+  dt = df[column].apply(cleaning)
 
   from collections import Counter
   p = Counter(" ".join(dt).split()).most_common(5)
   rslt = pd.DataFrame(p, columns=['Word', 'Frequency'])
   return(rslt)
 
-def working_null_values():
-  print(naukri.isnull().sum())
-  # naukri.fillna('NULL')
-
-def job_title_analysis_naukri(df, title_df):
-  df['Job Title'] = naukri['Job Title'].apply(preprocess_text)
-
-  # Define the text to compare
-  df['Job Title'] = df['Job Title'].str.lower()
-
-  for idx, job_desc in df.iterrows():
-    processed_desc = job_desc['processed_description']
-    similarity_scores = title_df['processed_title'].apply(lambda x: cosine_similarity([processed_desc], [x])[0][0])
-    max_similarity = max(similarity_scores)
-    most_similar_title = title_df.loc[similarity_scores.idxmax(), 'Title']
-    df.at[idx, 'Job Title'] = most_similar_title
-
-    print(df)
-
-  print("\n BEFORE \n")
-  df_name.drop(['Rating'], axis=1, inplace=True)
-
 def exporting_excel(df_name):
   df_name.to_excel(df_name + '.xlsx', index = False)
 
-def similarity(df, titles):
-  # Load the DataFrame with the 'Job Title' column
-  # Load the file with the bunch of words
-  # with open('bunch_of_words.txt', 'r') as file:
-  #     bunch_of_words = [line.strip() for line in file]
+def count_min_exp(df):
+  global zero, three, five 
+  global zero_sal, three_sal, five_sal
+  zero_sal = 0
+  three_sal = 0
+  five_sal = 0
+  exp_initial_fetcher = lambda text: text.split('-')[0]
+  for index, row in df.iterrows():
+    var = row['Experience Reqd']
+    
+    if (var != 'Not-Mentioned'):
+      initial_val = exp_initial_fetcher(var)
+      initial_val = int(initial_val)
+      if initial_val == 0:
+        zero_sal += 1
+      elif initial_val >= 3 and initial_val < 5:
+        three_sal += 1
+      elif initial_val >= 5:
+        five_sal += 1
+  print('ZERO :', zero_sal)
+  print('THREE :', three_sal)
+  print('FIVE :', five_sal)
 
-  # Compute similarity scores for each word in the 'Job Title' column
-  df['Similarity'] = df['Job Title'].apply(lambda x: max(Word(word).wup_similarity(Word(x)) for word in titles))
+def date_posted(df, type):
+  global today, week, others
+  today = 0
+  week = 0
+  others = 0
+  if type == 'naukri':
+    print('NAUKRI INITIATED')
+    for index, row in df.iterrows():
+      dates = row['Date Posted'].strip()
+      try:
+        if dates == 'Just Now':
+          today += 1
+          week += 1
+        elif dates == '1 Day Ago' or dates == '2 Days Ago'  or dates == '3 Days Ago' or dates == '4 Days Ago' or dates == '5 Days Ago' or dates == '6 Days Ago':
+          week += 1
+        else:
+          others += 1
+      except Exception as e: 
+        print('EXCEPTION OCCURED DURING THE RUNNING OF def date_posted')
+  elif type == 'iimjobs':
+    print('IIM JOBS INITIATED')
+    current_date = datetime.date.today()
+    y0 = current_date.strftime("%d/%m/%Y")
+    for index, row in df.iterrows():
+      date = row['Date Posted'].strip()
+      y1 = current_date - datetime.timedelta(days=1)
+      y1 = y1.strftime("%d/%m/%Y")
+      y2 = current_date - datetime.timedelta(days=2)
+      y2 = y2.strftime("%d/%m/%Y")
+      y3 = current_date - datetime.timedelta(days=3)
+      y3 = y3.strftime("%d/%m/%Y")
+      y4 = current_date - datetime.timedelta(days=4)
+      y4 = y4.strftime("%d/%m/%Y")
+      y5 = current_date - datetime.timedelta(days=6)
+      y5 = y5.strftime("%d/%m/%Y")
+      if date == y0:
+        today+=1
+        week+=1Z
+      elif date == y1 or date == y2 or date == y3 or date == y4 or date == y5:
+        week+=1
+      else:
+        others+=1
+      
+## RUNNING THE FUNCTIONS:
 
-  # Replace 'Job Title' with the most similar words from the bunch
-  df['Job Title'] = df['Job Title'].apply(lambda x: max(titles, key=lambda word: Word(word).wup_similarity(Word(x))))
+# f = frequency_title(naukri, 'Date Posted')
+# count_min_exp(naukri)
+date_posted(iimjobs, 'iimjobs')
+print("TODAY :", today)
+print("THIS WEEK :", week)
+print('OTHERS :', others)
 
-  # Display the updated DataFrame
-  print(df)
+date_posted(naukri, 'naukri')
+print("TODAY :", today)
+print("THIS WEEK :", week)
+print('OTHERS :', others)
+## DISPLAYING THE FUNCTIONS
 
-
-# print(job_title_analysis_naukri(naukri))
-
-# job_title_analysis_naukri(naukri, job_titles)
-# print(preprocess_text(naukri['Job Title']))
-
-# sns.countplot(x = 'Date Posted', data = naukri2)
+# sns.barplot(x = 'Word',y = 'Frequency', data = f)
 # plt.show()
-# sns.countplot(x = 'Job Title', data = naukri2)
-# plt.show()
-
-f = frequency(naukri)
-print(f)
-
-sns.barplot(x = 'Word',y = 'Frequency', data = f)
-plt.show()
+# print(f)
