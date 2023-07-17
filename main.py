@@ -1,27 +1,47 @@
 import re
 import string
 import datetime
+import os
+import sys
+import subprocess
 
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
 
+cur_path = os.path.dirname(os.path.abspath(__file__))
+
+scripts = os.path.join(cur_path, 'scripts')
+data = os.path.join(scripts, 'data')
+
+# sys.path.append(scripts)
 ## Turn these on later:
 # nltk.download('punkt')
 # nltk.download('stopwords')
 
-naukri=pd.read_excel('NaukriJobListing_2023-07-14.xlsx')
-iimjobs=pd.read_excel('IIMJobsJobListing_2023-07-15.xlsx')
+try:
+  naukri=pd.read_excel(os.path.join(data, "NaukriJobListing_" + str(datetime.date.today()) + ".xlsx"))
+except Exception as e:
+  print('EXCEPTION OCCURED \n DATA NOT PRESENT \n \n FETCHING DATA NOW, PLEASE WAIT...')
+  naukri = subprocess.run(['python', os.path.join(scripts, 'naukri scraper.py')])
+  naukri.wait()
+  naukri=pd.read_excel(os.path.join(data, "NaukriJobListing_" + str(datetime.date.today()) + ".xlsx"))
 
-job_titles=pd.read_excel('job-titles.xlsx')
+try:
+  iimjobs=pd.read_excel(os.path.join(scripts, "IIMJobsJobListing_" + str(datetime.date.today()) + ".xlsx"))
+except Exception as e:
+  print('EXCEPTION OCCURED \n DATA NOT PRESENT \n \n FETCHING DATA NOW, PLEASE WAIT...')
+  iimjobs = subprocess.run(['python', os.path.join(scripts, 'iimjobs scraper.py')])
+  iimjobs.wait()
+  iimjobs=pd.read_excel(os.path.join(scripts, "IIMJobsJobListing_" + str(datetime.date.today()) + ".xlsx"))
+
+job_titles=pd.read_excel(os.path.join(data, "job-titles.xlsx"))
 
 def frequency_title(df, column):
-  stop_words = stopwords.words()
+  stop_words = stopwords.words()  
 
   def cleaning(text):        
       # converting to lowercase, removing URL links, special characters, punctuations...
@@ -55,7 +75,7 @@ def frequency_title(df, column):
   dt = df[column].apply(cleaning)
 
   from collections import Counter
-  p = Counter(" ".join(dt).split()).most_common(5)
+  p = Counter(" ".join(dt).split()).most_common(4)
   rslt = pd.DataFrame(p, columns=['Word', 'Frequency'])
   return(rslt)
 
@@ -122,7 +142,7 @@ def date_posted(df, type):
       y5 = y5.strftime("%d/%m/%Y")
       if date == y0:
         today+=1
-        week+=1Z
+        week+=1
       elif date == y1 or date == y2 or date == y3 or date == y4 or date == y5:
         week+=1
       else:
@@ -130,19 +150,25 @@ def date_posted(df, type):
       
 ## RUNNING THE FUNCTIONS:
 
-# f = frequency_title(naukri, 'Date Posted')
-# count_min_exp(naukri)
-date_posted(iimjobs, 'iimjobs')
-print("TODAY :", today)
-print("THIS WEEK :", week)
-print('OTHERS :', others)
+f = frequency_title(naukri, 'Job Title')
 
-date_posted(naukri, 'naukri')
-print("TODAY :", today)
-print("THIS WEEK :", week)
-print('OTHERS :', others)
+# count_min_exp(naukri)
+# date_posted(iimjobs, 'iimjobs')
+# print("TODAY :", today)
+# print("THIS WEEK :", week)
+# print('OTHERS :', others)
+
+# date_posted(naukri, 'naukri')
+# print("TODAY :", today)
+# print("THIS WEEK :", week)
+# print('OTHERS :', others)
 ## DISPLAYING THE FUNCTIONS
 
 # sns.barplot(x = 'Word',y = 'Frequency', data = f)
 # plt.show()
-# print(f)
+print(f)
+
+## Doing the coding stuff:
+
+# def main():
+  
