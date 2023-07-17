@@ -22,23 +22,29 @@ data = os.path.join(scripts, 'data')
 # nltk.download('punkt')
 # nltk.download('stopwords')
 
+database = pd.DataFrame(columns=['Job Title','Description', 'Experience Reqd', 'Company', 'City', 'Salary Range', 'Date Posted', 'Rating', 'Site', 'URL'])
+
 try:
   naukri=pd.read_excel(os.path.join(data, "NaukriJobListing_" + str(datetime.date.today()) + ".xlsx"))
+  database = pd.concat([database, naukri], ignore_index=True)
 except Exception as e:
   print('EXCEPTION OCCURED \n DATA NOT PRESENT \n \n FETCHING DATA NOW, PLEASE WAIT...')
   naukri = subprocess.run(['python', os.path.join(scripts, 'naukri scraper.py')])
   naukri.wait()
   naukri=pd.read_excel(os.path.join(data, "NaukriJobListing_" + str(datetime.date.today()) + ".xlsx"))
+  database = pd.concat([database, naukri], ignore_index=True)
 
 try:
   iimjobs=pd.read_excel(os.path.join(scripts, "IIMJobsJobListing_" + str(datetime.date.today()) + ".xlsx"))
+  database = pd.concat([database, naukri], ignore_index=True)
 except Exception as e:
   print('EXCEPTION OCCURED \n DATA NOT PRESENT \n \n FETCHING DATA NOW, PLEASE WAIT...')
   iimjobs = subprocess.run(['python', os.path.join(scripts, 'iimjobs scraper.py')])
   iimjobs.wait()
   iimjobs=pd.read_excel(os.path.join(scripts, "IIMJobsJobListing_" + str(datetime.date.today()) + ".xlsx"))
+  database = pd.concat([database, naukri], ignore_index=True)
 
-job_titles=pd.read_excel(os.path.join(data, "job-titles.xlsx"))
+# job_titles=pd.read_excel(os.path.join(data, "job-titles.xlsx"))
 
 def frequency_title(df, column):
   stop_words = stopwords.words()  
@@ -80,7 +86,7 @@ def frequency_title(df, column):
   return(rslt)
 
 def exporting_excel(df_name):
-  df_name.to_excel(df_name + '.xlsx', index = False)
+  df_name.to_excel(os.path.join(data, df_name + '.xlsx'), index = False)
 
 def count_min_exp(df):
   global zero, three, five 
@@ -92,7 +98,7 @@ def count_min_exp(df):
   for index, row in df.iterrows():
     var = row['Experience Reqd']
     
-    if (var != 'Not-Mentioned'):
+    if var != 'Not-Mentioned':
       initial_val = exp_initial_fetcher(var)
       initial_val = int(initial_val)
       if initial_val == 0:
@@ -104,6 +110,7 @@ def count_min_exp(df):
   print('ZERO :', zero_sal)
   print('THREE :', three_sal)
   print('FIVE :', five_sal)
+  print('*********COMPLETED TAKING OUT THE MINIMUM EXPERIENCE REQUIRED**********')
 
 def date_posted(df, type):
   global today, week, others
@@ -150,7 +157,11 @@ def date_posted(df, type):
       
 ## RUNNING THE FUNCTIONS:
 
-f = frequency_title(naukri, 'Job Title')
+frequency = frequency_title(database, 'Job Title')
+data_exp_reqd = count_min_exp(database)
+naukri_date_posted=date_posted(naukri, 'naukri')
+iim_date_posted=date_posted(iimjobs, 'iimjobs')
+
 
 # count_min_exp(naukri)
 # date_posted(iimjobs, 'iimjobs')
@@ -166,9 +177,6 @@ f = frequency_title(naukri, 'Job Title')
 
 # sns.barplot(x = 'Word',y = 'Frequency', data = f)
 # plt.show()
-print(f)
+# print(count)
 
 ## Doing the coding stuff:
-
-# def main():
-  
