@@ -6,8 +6,8 @@ import sys
 import subprocess
 
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+# import numpy as np
+# import matplotlib.pyplot as plt
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -19,8 +19,8 @@ data = os.path.join(scripts, 'data')
 
 # sys.path.append(scripts)
 ## Turn these on later:
-# nltk.download('punkt')
-# nltk.download('stopwords')
+nltk.download('punkt')
+nltk.download('stopwords')
 
 database = pd.DataFrame(columns=['Job Title','Description', 'Experience Reqd', 'Company', 'City', 'Salary Range', 'Date Posted', 'Rating', 'Site', 'URL'])
 
@@ -46,7 +46,7 @@ except Exception as e:
 
 # job_titles=pd.read_excel(os.path.join(data, "job-titles.xlsx"))
 
-def frequency_title(df, column):
+def frequency_title(column):
   stop_words = stopwords.words()  
 
   def cleaning(text):        
@@ -77,7 +77,7 @@ def frequency_title(df, column):
       
       return text
   
-  # df = pd.read_excel('NaukriJobListing_2023-07-14.xlsx')
+  df = database
   dt = df[column].apply(cleaning)
 
   from collections import Counter
@@ -88,14 +88,14 @@ def frequency_title(df, column):
 def exporting_excel(df_name):
   df_name.to_excel(os.path.join(data, df_name + '.xlsx'), index = False)
 
-def count_min_exp(df):
+def count_min_exp():
   global zero, three, five 
   global zero_sal, three_sal, five_sal
   zero_sal = 0
   three_sal = 0
   five_sal = 0
   exp_initial_fetcher = lambda text: text.split('-')[0]
-  for index, row in df.iterrows():
+  for index, row in database.iterrows():
     var = row['Experience Reqd']
     
     if var != 'Not-Mentioned':
@@ -112,13 +112,14 @@ def count_min_exp(df):
   print('FIVE :', five_sal)
   print('*********COMPLETED TAKING OUT THE MINIMUM EXPERIENCE REQUIRED**********')
 
-def date_posted(df, type):
+def date_posted(type):
   global today, week, others
   today = 0
   week = 0
   others = 0
   if type == 'naukri':
     print('NAUKRI INITIATED')
+    df = naukri
     for index, row in df.iterrows():
       dates = row['Date Posted'].strip()
       try:
@@ -133,6 +134,7 @@ def date_posted(df, type):
         print('EXCEPTION OCCURED DURING THE RUNNING OF def date_posted')
   elif type == 'iimjobs':
     print('IIM JOBS INITIATED')
+    df = iimjobs
     current_date = datetime.date.today()
     y0 = current_date.strftime("%d/%m/%Y")
     for index, row in df.iterrows():
@@ -157,11 +159,12 @@ def date_posted(df, type):
       
 ## RUNNING THE FUNCTIONS:
 
-frequency = frequency_title(database, 'Job Title')
-data_exp_reqd = count_min_exp(database)
-naukri_date_posted=date_posted(naukri, 'naukri')
-iim_date_posted=date_posted(iimjobs, 'iimjobs')
-
+def main():
+  frequency = frequency_title('Job Title')
+  data_exp_reqd = count_min_exp()
+  naukri_date_posted=date_posted('naukri')
+  iim_date_posted=date_posted('iimjobs')
+  print('SUCCESSFUL CONCLUSION OF THE PROGRAM')
 
 # count_min_exp(naukri)
 # date_posted(iimjobs, 'iimjobs')
